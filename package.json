@@ -1,0 +1,39 @@
+{
+  "name": "snoken",
+  "version": "1.0.0",
+  "description": "A take on the classic snake game",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "npx babel src --out-dir dist",
+    "start": "npx babel src --watch --out-dir dist",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dannemanne/snoken.git"
+  },
+  "keywords": [
+    "snake",
+    "game",
+    "snoken"
+  ],
+  "author": "Daniel Viklund",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/dannemanne/snoken/issues"
+  },
+  "homepage": "https://github.com/dannemanne/snoken#readme",
+  "dependencies": {
+    "classnames": "^2.2.6",
+    "prop-types": "^15.7.2"
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.12.17",
+    "@babel/core": "^7.12.17",
+    "@babel/preset-env": "^7.12.17",
+    "@babel/preset-react": "^7.12.13"
+  },
+  "peerDependencies": {
+    "react": "^16.8.0"
+  }
+}
