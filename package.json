@@ -22,7 +22,7 @@
   "bugs": {
     "url": "https://github.com/dannemanne/snoken/issues"
   },
-  "homepage": "https://github.com/dannemanne/snoken#readme",
+  "homepage": "https://viklund.dev/snoken",
   "dependencies": {
     "classnames": "^2.2.6",
     "prop-types": "^15.7.2"

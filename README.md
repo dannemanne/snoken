@@ -1,10 +1,38 @@
 # snoken
 
+A take on the classic snake game from back in the early days of mobile game development.
+
+<div align="center">
+
+[![npm](https://img.shields.io/npm/v/snoken)](https://www.npmjs.com/package/snoken)
+[![npm](https://img.shields.io/bundlephobia/minzip/snoken)](https://www.npmjs.com/package/snoken)
+[![npm](https://img.shields.io/npm/l/snoken)](https://github.com/dannemanne/snoken/blob/master/LICENSE)
+
+</div>
+
 The name "snoken" is Swedish for "the snake", or specifically one type of snake that is common in Sweden.
 
-This package is a take on the classic snake game from back in the early days of mobile game development.
-
 ![alt text](https://github.com/dannemanne/snoken/blob/main/preview.png?raw=true)
+
+## Install
+
+    npm install snoken
+
+## Quickstart
+
+```jsx
+import React from 'react';
+import Snoken from 'snoken';
+
+function App() {
+
+  return (
+    <div className="my-app-container">
+      <Snoken />
+    </div>
+  );
+}
+```
 
 ## Local Development
 
