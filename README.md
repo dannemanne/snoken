@@ -4,7 +4,7 @@ The name "snoken" is Swedish for "the snake", or specifically one type of snake 
 
 This package is a take on the classic snake game from back in the early days of mobile game development.
 
-![alt text](https://github.com/dannemanne/snoken/blob/master/preview.png?raw=true)
+![alt text](https://github.com/dannemanne/snoken/blob/main/preview.png?raw=true)
 
 ## Local Development
 
