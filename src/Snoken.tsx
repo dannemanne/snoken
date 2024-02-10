@@ -1,26 +1,43 @@
 import React, { useEffect, useRef, useState } from 'react';
 
+import { createTarget, eatTarget, hasCollission, move } from './actions';
 import { buildBoard } from './buildBoard';
+import type { DirectionPressedParams } from './directionPressed';
 import { directionKeyPressed, directionPressed } from './directionPressed';
 import { draw } from './draw';
-import { createTarget, eatTarget, hasCollission, move } from './actions';
+import type { BoardSize, ControlRef, Direction, Snake } from './types';
 import { useAnimationFrame } from './useAnimationFrame';
 
-const Snoken = (props) => {
+type Props = {
+  boardSize?: BoardSize;
+  ctrlRef?: ControlRef;
+  defaultSnake?: Snake;
+  onGameOver?: (params: { score: number; speed: number; length: number }) => void;
+  onGameUpdate?: (params: { score: number; snake: Snake; speed: number }) => void;
+  onStarted?: () => void;
+  speedInitial?: number;
+  speedIncrement?: number;
+  start?: boolean;
+};
+const Snoken: React.FC<Props> = props => {
   const {
     boardSize = [20, 20],
     ctrlRef = null,
-    defaultSnake = [[5, 9], [4, 9], [3, 9]],
+    defaultSnake = [
+      [5, 9],
+      [4, 9],
+      [3, 9],
+    ],
     onGameOver = null,
     onGameUpdate = null,
     onStarted = null,
     speedInitial = 0.001,
     speedIncrement = 0.001,
     start = true,
-   } = props;
+  } = props;
 
-  const [snake, setSnake] = useState(defaultSnake)
-  const [dir, setDir] = useState([1, 0]);
+  const [snake, setSnake] = useState(defaultSnake);
+  const [dir, setDir] = useState<Direction>([1, 0]);
   const [buffer, setBuffer] = useState(0);
   const [speed, setSpeed] = useState(speedInitial);
   const [target, setTarget] = useState(createTarget(boardSize, snake));
@@ -28,24 +45,33 @@ const Snoken = (props) => {
   const [hasChangedDir, setHasChangedDir] = useState(false);
   const [gameRunning, setGameRunning] = useState(false);
 
-  const canvasRef = useRef(null);
-  const eventRef = useRef(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const eventRef = useRef<(e: KeyboardEvent) => void>(() => {});
 
   useEffect(() => {
-    const directionProps = { dir, setDir, speed, setSpeed, hasChangedDir, setHasChangedDir, speedIncrement, speedInitial };
+    const params: DirectionPressedParams = {
+      dir,
+      setDir,
+      speed,
+      setSpeed,
+      hasChangedDir,
+      setHasChangedDir,
+      speedIncrement,
+      speedInitial,
+    };
 
-    // If ctrlRef was passed to component, 
+    // If ctrlRef was passed to component,
     if (ctrlRef) {
       ctrlRef.current = {
-        left:   directionPressed.bind(null, directionProps, [-1, 0]),
-        up:     directionPressed.bind(null, directionProps, [0, -1]),
-        right:  directionPressed.bind(null, directionProps, [1, 0]),
-        down:   directionPressed.bind(null, directionProps, [0, 1]),
+        left: directionPressed.bind(null, params, [-1, 0]),
+        up: directionPressed.bind(null, params, [0, -1]),
+        right: directionPressed.bind(null, params, [1, 0]),
+        down: directionPressed.bind(null, params, [0, 1]),
       };
     }
 
     // Add event listener with directionProps bound, to handle key down events.
-    eventRef.current = directionKeyPressed.bind(null, directionProps);
+    eventRef.current = directionKeyPressed.bind(null, params);
     document.addEventListener('keydown', eventRef.current);
 
     // Return function to remove event listener
@@ -59,7 +85,7 @@ const Snoken = (props) => {
       setDir([1, 0]);
       setSnake(defaultSnake);
       setTarget(createTarget(boardSize, defaultSnake));
-      
+
       setGameRunning(true);
       onStarted && onStarted();
     }
@@ -67,13 +93,13 @@ const Snoken = (props) => {
 
   useEffect(() => {
     onGameUpdate && onGameUpdate({ score, snake, speed: Math.round(speed * 1000) });
-  }, [onGameUpdate, score, snake, speed])
+  }, [onGameUpdate, score, snake, speed]);
 
   useAnimationFrame(timeDiffMilli => {
     if (!gameRunning) return;
 
-    let lapsed = buffer + timeDiffMilli;
-    let cycles = Math.floor(lapsed * speed);
+    const lapsed = buffer + timeDiffMilli;
+    const cycles = Math.floor(lapsed * speed);
 
     if (cycles > 0) {
       const newSnake = move(snake, dir, boardSize);
@@ -83,14 +109,12 @@ const Snoken = (props) => {
         setSnake(newSnake);
         setGameRunning(false);
 
-        onGameOver && onGameOver({ score, speed, length: snake.length })
-
+        onGameOver && onGameOver({ score, speed, length: snake.length });
       } else if (eatTarget(newSnake, target)) {
-        const grownSnake = [...newSnake, snake[snake.length-1]];
+        const grownSnake = [...newSnake, snake[snake.length - 1]];
         setScore(score + 10);
         setSnake(grownSnake);
         setTarget(createTarget(boardSize, grownSnake));
-
       } else {
         setSnake(newSnake);
       }
@@ -100,28 +124,23 @@ const Snoken = (props) => {
     }
   });
 
-  const boardRef = useRef(null);
+  const boardRef = useRef<HTMLCanvasElement | null>(null);
   useEffect(() => {
-    const canvas = canvasRef.current;
-    const { width, height } = canvas;
+    if (canvasRef.current) {
+      const { width, height } = canvasRef.current;
 
-    boardRef.current = buildBoard({ boardSize, height, width });
+      boardRef.current = buildBoard({ boardSize, height, width });
+    }
   }, [boardSize, canvasRef.current]);
 
   useEffect(() => {
-    const canvas = canvasRef.current;
-    const context = canvas.getContext('2d');
-
-    draw(context, { boardCanvas: boardRef.current, boardSize, snake, target });
+    const context = canvasRef.current?.getContext('2d');
+    if (context && boardRef.current) {
+      draw(context, { boardCanvas: boardRef.current, boardSize, snake, target });
+    }
   }, [boardRef.current, snake, canvasRef, target]);
 
-  return (
-    <canvas
-      ref={canvasRef}
-      width={400}
-      height={400}
-    />
-  );
+  return <canvas ref={canvasRef} width={400} height={400} />;
 };
 
 export default Snoken;
