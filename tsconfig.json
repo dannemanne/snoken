@@ -11,6 +11,7 @@
     "jsx": "react",
     "lib": ["es6", "dom"],
     "moduleResolution": "node",
+    "module": "commonjs",
     "noErrorTruncation": true,
     "noFallthroughCasesInSwitch": true,
     "noImplicitReturns": true,
