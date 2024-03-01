@@ -5,10 +5,11 @@ import { buildBoard } from './buildBoard';
 import type { DirectionPressedParams } from './directionPressed';
 import { directionKeyPressed, directionPressed } from './directionPressed';
 import { draw } from './draw';
-import type { BoardSize, ControlRef, Direction, Snake } from './types';
+import type { BoardPainter, BoardSize, ControlRef, Direction, Snake } from './types';
 import { useAnimationFrame } from './useAnimationFrame';
 
 type Props = {
+  boardPainter?: BoardPainter;
   boardSize?: BoardSize;
   ctrlRef?: ControlRef;
   defaultSnake?: Snake;
@@ -17,10 +18,13 @@ type Props = {
   onStarted?: () => void;
   speedInitial?: number;
   speedIncrement?: number;
+  speedMax?: number;
+  speedMin?: number;
   start?: boolean;
 };
 const Snoken: React.FC<Props> = props => {
   const {
+    boardPainter,
     boardSize = [20, 20],
     ctrlRef = null,
     defaultSnake = [
@@ -31,8 +35,10 @@ const Snoken: React.FC<Props> = props => {
     onGameOver = null,
     onGameUpdate = null,
     onStarted = null,
-    speedInitial = 0.001,
-    speedIncrement = 0.001,
+    speedInitial = 1,
+    speedIncrement = 1,
+    speedMax = 100,
+    speedMin = 1,
     start = true,
   } = props;
 
@@ -58,6 +64,8 @@ const Snoken: React.FC<Props> = props => {
       setHasChangedDir,
       speedIncrement,
       speedInitial,
+      speedMin,
+      speedMax,
     };
 
     // If ctrlRef was passed to component,
@@ -92,14 +100,15 @@ const Snoken: React.FC<Props> = props => {
   }, [start, gameRunning, onStarted]);
 
   useEffect(() => {
-    onGameUpdate && onGameUpdate({ score, snake, speed: Math.round(speed * 1000) });
+    onGameUpdate && onGameUpdate({ score, snake, speed });
   }, [onGameUpdate, score, snake, speed]);
 
   useAnimationFrame(timeDiffMilli => {
     if (!gameRunning) return;
 
+    const movesPerMilli = speed * 0.001;
     const lapsed = buffer + timeDiffMilli;
-    const cycles = Math.floor(lapsed * speed);
+    const cycles = Math.floor(lapsed * movesPerMilli);
 
     if (cycles > 0) {
       const newSnake = move(snake, dir, boardSize);
@@ -118,7 +127,7 @@ const Snoken: React.FC<Props> = props => {
       } else {
         setSnake(newSnake);
       }
-      setBuffer(lapsed - cycles / speed);
+      setBuffer(lapsed - cycles / movesPerMilli);
     } else {
       setBuffer(lapsed);
     }
@@ -129,9 +138,9 @@ const Snoken: React.FC<Props> = props => {
     if (canvasRef.current) {
       const { width, height } = canvasRef.current;
 
-      boardRef.current = buildBoard({ boardSize, height, width });
+      boardRef.current = buildBoard({ boardPainter, boardSize, height, width });
     }
-  }, [boardSize, canvasRef.current]);
+  }, [boardPainter, boardSize, canvasRef.current]);
 
   useEffect(() => {
     const context = canvasRef.current?.getContext('2d');
