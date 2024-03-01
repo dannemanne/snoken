@@ -1,14 +1,32 @@
-import type { BoardSize } from './types';
+import type { BoardPainter, BoardPainterOptions, BoardSize } from './types';
 
-const checkeredStyles = ['#a2d149', '#aad751'];
+const DEFAULT_COLORS = ['#a2d149', '#aad751'];
 
-type BuildBoard = (params: { boardSize: BoardSize; height: number; width: number }) => HTMLCanvasElement;
+const defaultBoardPainter: BoardPainter = ({ x, y, boardPainterOptions }) => {
+  const colors = boardPainterOptions?.colors || DEFAULT_COLORS;
+
+  const fillStyle = (() => {
+    if (!Array.isArray(colors)) return colors;
+
+    const idx = (x + y) % colors.length;
+    if (!Array.isArray(colors[idx])) return colors[idx] as string;
+
+    return colors[y][x] || DEFAULT_COLORS[0];
+  })();
+
+  return { fillStyle, strokeStyle: 'none' };
+};
+
+type BuildBoard = (params: {
+  boardPainter?: BoardPainter;
+  boardPainterOptions?: BoardPainterOptions;
+  boardSize: BoardSize;
+  height: number;
+  width: number;
+}) => HTMLCanvasElement;
 export const buildBoard: BuildBoard = params => {
-  const {
-    width,
-    height,
-    boardSize: [boardW, boardH],
-  } = params;
+  const { boardPainter = defaultBoardPainter, boardPainterOptions, boardSize, width, height } = params;
+  const [boardW, boardH] = boardSize;
 
   const segWidth = width / boardW;
   const segHeight = height / boardH;
@@ -24,17 +42,17 @@ export const buildBoard: BuildBoard = params => {
 
   // Draw board
 
-  Array(boardW)
+  Array(boardW * boardH)
     .fill(null)
-    .forEach((_, x) => {
-      Array(boardH)
-        .fill(null)
-        .forEach((_, y) => {
-          const idx = (x + y) % 2;
-          boardContext.fillStyle = checkeredStyles[idx];
+    .forEach((_, i) => {
+      const x = i % boardW;
+      const y = Math.floor(i / boardW);
 
-          boardContext.fillRect(x * segWidth, y * segHeight, segWidth, segHeight);
-        });
+      const { fillStyle, strokeStyle } = boardPainter({ x, y, boardPainterOptions, boardSize });
+      boardContext.fillStyle = fillStyle;
+      boardContext.strokeStyle = strokeStyle;
+
+      boardContext.fillRect(x * segWidth, y * segHeight, segWidth, segHeight);
     });
 
   return boardCanvas;

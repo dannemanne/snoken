@@ -9,6 +9,8 @@ export type DirectionPressedParams = {
   speed: number;
   speedIncrement: number;
   speedInitial: number;
+  speedMax: number;
+  speedMin: number;
 };
 
 const KEY_DIRECTIONS: Record<string, Direction | undefined> = {
@@ -31,7 +33,18 @@ export const directionKeyPressed: DirectionKeyPressed = (params, e) => {
 
 type DirectionPressed = (params: DirectionPressedParams, newDir: Direction) => void;
 export const directionPressed: DirectionPressed = (params, newDir) => {
-  const { dir, hasChangedDir, setDir, setHasChangedDir, setSpeed, speed, speedIncrement, speedInitial } = params;
+  const {
+    dir,
+    hasChangedDir,
+    setDir,
+    setHasChangedDir,
+    setSpeed,
+    speed,
+    speedIncrement,
+    speedInitial,
+    speedMax,
+    speedMin,
+  } = params;
 
   const [x, y] = dir;
   const cx = x + newDir[0];
@@ -39,10 +52,10 @@ export const directionPressed: DirectionPressed = (params, newDir) => {
 
   if (cx === 0 && cy === 0) {
     // Pressed opposite direction key. No turn but slow down
-    setSpeed(Math.max(speed - speedIncrement, speedInitial));
+    if (speed > speedMin) setSpeed(Math.max(speed - speedIncrement, speedInitial));
   } else if (Math.abs(cx) === 2 || Math.abs(cy) === 2) {
     // Pressed same direction key. No turn but speed up
-    setSpeed(speed + speedIncrement);
+    if (speed < speedMax) setSpeed(speed + speedIncrement);
   } else if (!hasChangedDir) {
     setDir(newDir);
     setHasChangedDir(true);

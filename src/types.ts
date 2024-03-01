@@ -16,3 +16,12 @@ export type ControlRef = MutableRefObject<{
   right: () => void;
   down: () => void;
 } | null>;
+
+export type BoardPainterOptions = { colors?: string | string[] | string[][] };
+
+export type BoardPainter = (params: {
+  boardPainterOptions?: BoardPainterOptions;
+  boardSize: BoardSize;
+  x: number;
+  y: number;
+}) => Pick<CanvasFillStrokeStyles, 'fillStyle' | 'strokeStyle'>;
