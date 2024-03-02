@@ -5,11 +5,12 @@ import { buildBoard } from './buildBoard';
 import type { DirectionPressedParams } from './directionPressed';
 import { directionKeyPressed, directionPressed } from './directionPressed';
 import { draw } from './draw';
-import type { BoardPainter, BoardSize, ControlRef, Direction, Snake } from './types';
+import type { BoardPainter, BoardPainterOptions, BoardSize, ControlRef, Direction, Snake } from './types';
 import { useAnimationFrame } from './useAnimationFrame';
 
 type Props = {
   boardPainter?: BoardPainter;
+  boardPainterOptions?: BoardPainterOptions;
   boardSize?: BoardSize;
   ctrlRef?: ControlRef;
   defaultSnake?: Snake;
@@ -25,6 +26,7 @@ type Props = {
 const Snoken: React.FC<Props> = props => {
   const {
     boardPainter,
+    boardPainterOptions,
     boardSize = [20, 20],
     ctrlRef = null,
     defaultSnake = [
@@ -138,9 +140,9 @@ const Snoken: React.FC<Props> = props => {
     if (canvasRef.current) {
       const { width, height } = canvasRef.current;
 
-      boardRef.current = buildBoard({ boardPainter, boardSize, height, width });
+      boardRef.current = buildBoard({ boardPainter, boardPainterOptions, boardSize, height, width });
     }
-  }, [boardPainter, boardSize, canvasRef.current]);
+  }, [boardPainter, boardPainterOptions, boardSize, canvasRef.current]);
 
   useEffect(() => {
     const context = canvasRef.current?.getContext('2d');
