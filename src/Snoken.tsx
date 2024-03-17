@@ -5,7 +5,18 @@ import { buildBoard } from './buildBoard';
 import type { DirectionPressedParams } from './directionPressed';
 import { directionKeyPressed, directionPressed } from './directionPressed';
 import { draw } from './draw';
-import type { BoardPainter, BoardPainterOptions, BoardSize, ControlRef, Direction, Snake } from './types';
+import type {
+  BoardPainter,
+  BoardPainterOptions,
+  BoardSize,
+  ControlRef,
+  Direction,
+  Snake,
+  SnakePainter,
+  SnakePainterOptions,
+  TargetPainter,
+  TargetPainterOptions,
+} from './types';
 import { useAnimationFrame } from './useAnimationFrame';
 
 type Props = {
@@ -14,14 +25,20 @@ type Props = {
   boardSize?: BoardSize;
   ctrlRef?: ControlRef;
   defaultSnake?: Snake;
+  height?: number;
   onGameOver?: (params: { score: number; speed: number; length: number }) => void;
   onGameUpdate?: (params: { score: number; snake: Snake; speed: number }) => void;
   onStarted?: () => void;
+  snakePainter?: SnakePainter;
+  snakePainterOptions?: SnakePainterOptions;
   speedInitial?: number;
   speedIncrement?: number;
   speedMax?: number;
   speedMin?: number;
   start?: boolean;
+  targetPainter?: TargetPainter;
+  targetPainterOptions?: TargetPainterOptions;
+  width?: number;
 };
 const Snoken: React.FC<Props> = props => {
   const {
@@ -34,14 +51,20 @@ const Snoken: React.FC<Props> = props => {
       [4, 9],
       [3, 9],
     ],
+    height = 400,
     onGameOver = null,
     onGameUpdate = null,
     onStarted = null,
+    snakePainter,
+    snakePainterOptions,
     speedInitial = 1,
     speedIncrement = 1,
     speedMax = 100,
     speedMin = 1,
     start = true,
+    targetPainter,
+    targetPainterOptions,
+    width = 400,
   } = props;
 
   const [snake, setSnake] = useState(defaultSnake);
@@ -82,11 +105,24 @@ const Snoken: React.FC<Props> = props => {
 
     // Add event listener with directionProps bound, to handle key down events.
     eventRef.current = directionKeyPressed.bind(null, params);
-    document.addEventListener('keydown', eventRef.current);
+    if (gameRunning) {
+      document.addEventListener('keydown', eventRef.current);
+    }
 
     // Return function to remove event listener
     return () => document.removeEventListener('keydown', eventRef.current);
-  }, [ctrlRef, dir, setDir, speed, setSpeed, hasChangedDir, setHasChangedDir, speedIncrement, speedInitial]);
+  }, [
+    ctrlRef,
+    dir,
+    gameRunning,
+    setDir,
+    speed,
+    setSpeed,
+    hasChangedDir,
+    setHasChangedDir,
+    speedIncrement,
+    speedInitial,
+  ]);
 
   useEffect(() => {
     if (!gameRunning && start) {
@@ -147,11 +183,20 @@ const Snoken: React.FC<Props> = props => {
   useEffect(() => {
     const context = canvasRef.current?.getContext('2d');
     if (context && boardRef.current) {
-      draw(context, { boardCanvas: boardRef.current, boardSize, snake, target });
+      draw(context, {
+        boardCanvas: boardRef.current,
+        boardSize,
+        snake,
+        snakePainter,
+        snakePainterOptions,
+        target,
+        targetPainter,
+        targetPainterOptions,
+      });
     }
   }, [boardRef.current, snake, canvasRef, target]);
 
-  return <canvas ref={canvasRef} width={400} height={400} />;
+  return <canvas ref={canvasRef} width={width} height={height} />;
 };
 
 export default Snoken;

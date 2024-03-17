@@ -27,3 +27,27 @@ export type BoardPainter = (params: {
   x: number;
   y: number;
 }) => Pick<CanvasFillStrokeStyles, 'fillStyle' | 'strokeStyle'>;
+
+export type SnakePainterOptions = {
+  bodyColor: string | string[];
+  eyeColor: string;
+  headColor: string;
+  tailColor: string;
+  toungueColor: string;
+};
+
+export type SnakePainter = (
+  ctx: CanvasRenderingContext2D,
+  params: {
+    boardSize: BoardSize;
+    snake: Snake;
+    snakePainterOptions?: SnakePainterOptions;
+  },
+) => void;
+
+export type TargetPainterOptions = { fillColor: string; strokeColor: string };
+
+export type TargetPainter = (
+  ctx: CanvasRenderingContext2D,
+  params: { boardSize: BoardSize; target: Position; targetPainterOptions?: TargetPainterOptions },
+) => void;
