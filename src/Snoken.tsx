@@ -141,8 +141,12 @@ const Snoken: React.FC<Props> = props => {
     onGameUpdate && onGameUpdate({ score, snake, speed });
   }, [onGameUpdate, score, snake, speed]);
 
+  const hasCalledGameOver = useRef(false);
   useAnimationFrame(timeDiffMilli => {
-    if (!gameRunning) return;
+    if (!gameRunning) {
+      hasCalledGameOver.current = false;
+      return;
+    }
 
     const movesPerMilli = speed * 0.001;
     const lapsed = buffer + timeDiffMilli;
@@ -156,7 +160,10 @@ const Snoken: React.FC<Props> = props => {
         setSnake(newSnake);
         setGameRunning(false);
 
-        onGameOver && onGameOver({ score, speed, length: snake.length });
+        if (!hasCalledGameOver.current) {
+          onGameOver?.({ score, speed, length: snake.length });
+          hasCalledGameOver.current = true;
+        }
       } else if (eatTarget(newSnake, target)) {
         const grownSnake = [...newSnake, snake[snake.length - 1]];
         setScore(score + 10);
