@@ -27,8 +27,11 @@ const KEY_DIRECTIONS: Record<string, Direction | undefined> = {
 export type DirectionKeyPressed = (params: DirectionPressedParams, e: KeyboardEvent) => void;
 export const directionKeyPressed: DirectionKeyPressed = (params, e) => {
   const newDir = KEY_DIRECTIONS[e.code];
+  if (!newDir) return;
 
-  newDir && directionPressed(params, newDir);
+  e.preventDefault();
+  e.stopPropagation();
+  directionPressed(params, newDir);
 };
 
 type DirectionPressed = (params: DirectionPressedParams, newDir: Direction) => void;
