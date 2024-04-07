@@ -51,3 +51,22 @@ export type TargetPainter = (
   ctx: CanvasRenderingContext2D,
   params: { boardSize: BoardSize; target: Position; targetPainterOptions?: TargetPainterOptions },
 ) => void;
+
+export type ActionText = { text: string; x: number; y: number; timestamp: number };
+
+export type ActionTextPainterOptions = { hideAfterMs: number };
+
+export type ActionTextPainter = (
+  ctx: CanvasRenderingContext2D,
+  params: { actionText: ActionText; actionTextPainterOptions?: ActionTextPainterOptions; boardSize: BoardSize },
+) => void;
+
+export type CalculateScoreOptions = {
+  baseScore?: number;
+  movesPenaltyCap?: number;
+  movesPenaltyMultiplier?: number;
+  scoreMaxCap?: number;
+  scoreMinCap?: number;
+  speedBonusCap?: number;
+  speedMultiplier?: number;
+};
