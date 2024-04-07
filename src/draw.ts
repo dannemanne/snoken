@@ -1,5 +1,9 @@
 import { defaultSnakePainter, defaultTargetPainter } from './painters';
+import { defaultActionTextPainter } from './painters/defaultActionTextPainter';
 import type {
+  ActionText,
+  ActionTextPainter,
+  ActionTextPainterOptions,
   BoardSize,
   Position,
   Snake,
@@ -12,6 +16,9 @@ import type {
 type Draw = (
   ctx: CanvasRenderingContext2D,
   params: {
+    actionTextPainter?: ActionTextPainter;
+    actionTextPainterOptions?: ActionTextPainterOptions;
+    actionTexts: ActionText[];
     boardCanvas: HTMLCanvasElement;
     boardSize: BoardSize;
     snake: Snake;
@@ -24,6 +31,9 @@ type Draw = (
 ) => void;
 export const draw: Draw = (ctx, params) => {
   const {
+    actionTextPainter = defaultActionTextPainter,
+    actionTextPainterOptions,
+    actionTexts,
     boardCanvas,
     boardSize,
     snake,
@@ -45,6 +55,9 @@ export const draw: Draw = (ctx, params) => {
 
   snakePainter(ctx, { boardSize, snake, snakePainterOptions });
   targetPainter(ctx, { boardSize, target, targetPainterOptions });
+  actionTexts.forEach(actionText => {
+    actionTextPainter(ctx, { actionText, actionTextPainterOptions, boardSize });
+  });
 
   // Check for collission, in case we draw a red cross on top of it
   const [head, ...body] = snake;

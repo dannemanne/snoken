@@ -5,10 +5,16 @@ import { buildBoard } from './buildBoard';
 import type { DirectionPressedParams } from './directionPressed';
 import { directionKeyPressed, directionPressed } from './directionPressed';
 import { draw } from './draw';
+import { defaultHideAfterMs } from './painters/defaultActionTextPainter';
+import { calculateScore } from './score';
 import type {
+  ActionText,
+  ActionTextPainter,
+  ActionTextPainterOptions,
   BoardPainter,
   BoardPainterOptions,
   BoardSize,
+  CalculateScoreOptions,
   ControlRef,
   Direction,
   Snake,
@@ -20,14 +26,23 @@ import type {
 import { useAnimationFrame } from './useAnimationFrame';
 
 type Props = {
+  actionTextPainter?: ActionTextPainter;
+  actionTextPainterOptions?: ActionTextPainterOptions;
   boardPainter?: BoardPainter;
   boardPainterOptions?: BoardPainterOptions;
   boardSize?: BoardSize;
+  calculateScoreOptions?: CalculateScoreOptions;
   ctrlRef?: ControlRef;
   defaultSnake?: Snake;
   height?: number;
-  onGameOver?: (params: { score: number; speed: number; length: number }) => void;
-  onGameUpdate?: (params: { score: number; snake: Snake; speed: number }) => void;
+  onGameOver?: (params: { score: number; speed: number; length: number; totalMoves: number }) => void;
+  onGameUpdate?: (params: {
+    recentMoves: number;
+    score: number;
+    snake: Snake;
+    speed: number;
+    totalMoves: number;
+  }) => void;
   onStarted?: () => void;
   snakePainter?: SnakePainter;
   snakePainterOptions?: SnakePainterOptions;
@@ -42,9 +57,12 @@ type Props = {
 };
 const Snoken: React.FC<Props> = props => {
   const {
+    actionTextPainter,
+    actionTextPainterOptions,
     boardPainter,
     boardPainterOptions,
     boardSize = [20, 20],
+    calculateScoreOptions,
     ctrlRef = null,
     defaultSnake = [
       [5, 9],
@@ -75,9 +93,12 @@ const Snoken: React.FC<Props> = props => {
   const [score, setScore] = useState(0);
   const [hasChangedDir, setHasChangedDir] = useState(false);
   const [gameRunning, setGameRunning] = useState(false);
+  const [actionTexts, setActionTexts] = useState<ActionText[]>([]);
+  const [moves, setMoves] = useState([0, 0]);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const eventRef = useRef<(e: KeyboardEvent) => void>(() => {});
+  const hadeActionTextAfterMs = actionTextPainterOptions?.hideAfterMs || defaultHideAfterMs;
 
   useEffect(() => {
     const params: DirectionPressedParams = {
@@ -138,8 +159,8 @@ const Snoken: React.FC<Props> = props => {
   }, [start, gameRunning, onStarted]);
 
   useEffect(() => {
-    onGameUpdate && onGameUpdate({ score, snake, speed });
-  }, [onGameUpdate, score, snake, speed]);
+    onGameUpdate && onGameUpdate({ recentMoves: moves[0], score, snake, speed, totalMoves: moves[1] });
+  }, [moves, onGameUpdate, score, snake, speed]);
 
   const hasCalledGameOver = useRef(false);
   useAnimationFrame(timeDiffMilli => {
@@ -154,22 +175,29 @@ const Snoken: React.FC<Props> = props => {
 
     if (cycles > 0) {
       const newSnake = move(snake, dir, boardSize);
+      const recentMoves = moves[0] + 1;
+      const totalMoves = moves[1] + 1;
       setHasChangedDir(false);
+      setActionTexts(v => v.filter(({ timestamp }) => Date.now() - timestamp < hadeActionTextAfterMs));
 
       if (hasCollission(newSnake)) {
         setSnake(newSnake);
         setGameRunning(false);
 
         if (!hasCalledGameOver.current) {
-          onGameOver?.({ score, speed, length: snake.length });
+          onGameOver?.({ score, speed, length: snake.length, totalMoves });
           hasCalledGameOver.current = true;
         }
       } else if (eatTarget(newSnake, target)) {
         const grownSnake = [...newSnake, snake[snake.length - 1]];
-        setScore(score + 10);
+        const value = calculateScore({ recentMoves, speed, totalMoves }, calculateScoreOptions);
+        setScore(score + value);
         setSnake(grownSnake);
         setTarget(createTarget(boardSize, grownSnake));
+        setActionTexts(v => [...v, { text: `+${value}`, x: target[0], y: target[1], timestamp: Date.now() }]);
+        setMoves([0, totalMoves]);
       } else {
+        setMoves([recentMoves, totalMoves]);
         setSnake(newSnake);
       }
       setBuffer(lapsed - cycles / movesPerMilli);
@@ -191,6 +219,9 @@ const Snoken: React.FC<Props> = props => {
     const context = canvasRef.current?.getContext('2d');
     if (context && boardRef.current) {
       draw(context, {
+        actionTextPainter,
+        actionTextPainterOptions,
+        actionTexts,
         boardCanvas: boardRef.current,
         boardSize,
         snake,
