@@ -1,14 +1,14 @@
 import type { FC } from 'react';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 import { createTarget, eatTarget, hasCollission, move } from './actions';
 import { buildBoard } from './buildBoard';
-import type { DirectionPressedParams } from './directionPressed';
+import type { DirectionPressedOptions, SnakeVelocity } from './directionPressed';
 import { directionKeyPressed, directionPressed } from './directionPressed';
 import { draw } from './draw';
 import { defaultHideAfterMs } from './painters/defaultActionTextPainter';
 import { calculateScore } from './score';
-import type { ActionText, Direction, SnokenProps } from './types';
+import type { ActionText, SnokenProps } from './types';
 import { useAnimationFrame } from './useAnimationFrame';
 
 const Snoken: FC<SnokenProps> = props => {
@@ -42,71 +42,58 @@ const Snoken: FC<SnokenProps> = props => {
   } = props;
 
   const [snake, setSnake] = useState(defaultSnake);
-  const [dir, setDir] = useState<Direction>([1, 0]);
-  const [buffer, setBuffer] = useState(0);
-  const [speed, setSpeed] = useState(speedInitial);
   const [target, setTarget] = useState(createTarget(boardSize, snake));
   const [score, setScore] = useState(0);
-  const [hasChangedDir, setHasChangedDir] = useState(false);
   const [gameRunning, setGameRunning] = useState(false);
   const [actionTexts, setActionTexts] = useState<ActionText[]>([]);
   const [moves, setMoves] = useState([0, 0]);
+
+  const [snakeVelocity, setSnakeVelocity] = useState<SnakeVelocity>({
+    dir: [1, 0],
+    hasChangedDir: false,
+    speed: speedInitial,
+  });
+  const { dir, speed } = snakeVelocity;
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const eventRef = useRef<(e: KeyboardEvent) => void>(() => {});
   const hadeActionTextAfterMs = actionTextPainterOptions?.hideAfterMs || defaultHideAfterMs;
 
-  useEffect(() => {
-    const params: DirectionPressedParams = {
-      dir,
-      setDir,
-      speed,
-      setSpeed,
-      hasChangedDir,
-      setHasChangedDir,
-      speedIncrement,
-      speedInitial,
-      speedMin,
-      speedMax,
-    };
+  const directionPressedOptions = useMemo<DirectionPressedOptions>(
+    () => ({ speedIncrement, speedInitial, speedMin, speedMax }),
+    [speedIncrement, speedInitial, speedMin, speedMax],
+  );
 
+  useEffect(() => {
     // If ctrlRef was passed to component,
     if (ctrlRef) {
       ctrlRef.current = {
-        left: directionPressed.bind(null, params, [-1, 0]),
-        up: directionPressed.bind(null, params, [0, -1]),
-        right: directionPressed.bind(null, params, [1, 0]),
-        down: directionPressed.bind(null, params, [0, 1]),
+        left: directionPressed.bind(null, snakeVelocity, setSnakeVelocity, directionPressedOptions, [-1, 0]),
+        up: directionPressed.bind(null, snakeVelocity, setSnakeVelocity, directionPressedOptions, [0, -1]),
+        right: directionPressed.bind(null, snakeVelocity, setSnakeVelocity, directionPressedOptions, [1, 0]),
+        down: directionPressed.bind(null, snakeVelocity, setSnakeVelocity, directionPressedOptions, [0, 1]),
       };
     }
 
     // Add event listener with directionProps bound, to handle key down events.
-    eventRef.current = directionKeyPressed.bind(null, params);
+    eventRef.current = directionKeyPressed.bind(null, snakeVelocity, setSnakeVelocity, directionPressedOptions);
     if (gameRunning) {
       document.addEventListener('keydown', eventRef.current);
     }
 
     // Return function to remove event listener
     return () => document.removeEventListener('keydown', eventRef.current);
-  }, [
-    ctrlRef,
-    dir,
-    gameRunning,
-    setDir,
-    speed,
-    setSpeed,
-    hasChangedDir,
-    setHasChangedDir,
-    speedIncrement,
-    speedInitial,
-  ]);
+  }, [snakeVelocity, directionPressedOptions, gameRunning]);
 
   useEffect(() => {
     if (!gameRunning && start) {
       setScore(0);
       setMoves([0, 0]);
-      setSpeed(speedInitial);
-      setDir([1, 0]);
+      setSnakeVelocity({
+        dir: [1, 0],
+        hasChangedDir: false,
+        speed: speedInitial,
+      });
       setSnake(defaultSnake);
       setTarget(createTarget(boardSize, defaultSnake));
 
@@ -120,6 +107,7 @@ const Snoken: FC<SnokenProps> = props => {
   }, [moves, onGameUpdate, score, snake, speed]);
 
   const hasCalledGameOver = useRef(false);
+  const bufferRef = useRef(0);
   useAnimationFrame(timeDiffMilli => {
     if (!gameRunning) {
       hasCalledGameOver.current = false;
@@ -127,14 +115,14 @@ const Snoken: FC<SnokenProps> = props => {
     }
 
     const movesPerMilli = speed * 0.001;
-    const lapsed = buffer + timeDiffMilli;
+    const lapsed = bufferRef.current + timeDiffMilli;
     const cycles = Math.floor(lapsed * movesPerMilli);
 
     if (cycles > 0) {
       const newSnake = move(snake, dir, boardSize);
       const recentMoves = moves[0] + 1;
       const totalMoves = moves[1] + 1;
-      setHasChangedDir(false);
+      setSnakeVelocity(v => ({ ...v, hasChangedDir: false }));
       setActionTexts(v => v.filter(({ timestamp }) => Date.now() - timestamp < hadeActionTextAfterMs));
 
       if (hasCollission(newSnake)) {
@@ -157,9 +145,9 @@ const Snoken: FC<SnokenProps> = props => {
         setMoves([recentMoves, totalMoves]);
         setSnake(newSnake);
       }
-      setBuffer(lapsed - cycles / movesPerMilli);
+      bufferRef.current = lapsed - cycles / movesPerMilli;
     } else {
-      setBuffer(lapsed);
+      bufferRef.current = lapsed;
     }
   });
 
