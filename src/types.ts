@@ -70,3 +70,38 @@ export type CalculateScoreOptions = {
   speedBonusCap?: number;
   speedMultiplier?: number;
 };
+
+export type OnGameOver = (params: { score: number; speed: number; length: number; totalMoves: number }) => void;
+
+export type OnGameUpdate = (params: {
+  recentMoves: number;
+  score: number;
+  snake: Snake;
+  speed: number;
+  totalMoves: number;
+}) => void;
+
+export type SnokenProps = {
+  actionTextPainter?: ActionTextPainter;
+  actionTextPainterOptions?: ActionTextPainterOptions;
+  boardPainter?: BoardPainter;
+  boardPainterOptions?: BoardPainterOptions;
+  boardSize?: BoardSize;
+  calculateScoreOptions?: CalculateScoreOptions;
+  ctrlRef?: ControlRef;
+  defaultSnake?: Snake;
+  height?: number;
+  onGameOver?: OnGameOver;
+  onGameUpdate?: OnGameUpdate;
+  onStarted?: () => void;
+  snakePainter?: SnakePainter;
+  snakePainterOptions?: SnakePainterOptions;
+  speedInitial?: number;
+  speedIncrement?: number;
+  speedMax?: number;
+  speedMin?: number;
+  start?: boolean;
+  targetPainter?: TargetPainter;
+  targetPainterOptions?: TargetPainterOptions;
+  width?: number;
+};

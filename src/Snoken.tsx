@@ -1,3 +1,4 @@
+import type { FC } from 'react';
 import React, { useEffect, useRef, useState } from 'react';
 
 import { createTarget, eatTarget, hasCollission, move } from './actions';
@@ -7,55 +8,10 @@ import { directionKeyPressed, directionPressed } from './directionPressed';
 import { draw } from './draw';
 import { defaultHideAfterMs } from './painters/defaultActionTextPainter';
 import { calculateScore } from './score';
-import type {
-  ActionText,
-  ActionTextPainter,
-  ActionTextPainterOptions,
-  BoardPainter,
-  BoardPainterOptions,
-  BoardSize,
-  CalculateScoreOptions,
-  ControlRef,
-  Direction,
-  Snake,
-  SnakePainter,
-  SnakePainterOptions,
-  TargetPainter,
-  TargetPainterOptions,
-} from './types';
+import type { ActionText, Direction, SnokenProps } from './types';
 import { useAnimationFrame } from './useAnimationFrame';
 
-type Props = {
-  actionTextPainter?: ActionTextPainter;
-  actionTextPainterOptions?: ActionTextPainterOptions;
-  boardPainter?: BoardPainter;
-  boardPainterOptions?: BoardPainterOptions;
-  boardSize?: BoardSize;
-  calculateScoreOptions?: CalculateScoreOptions;
-  ctrlRef?: ControlRef;
-  defaultSnake?: Snake;
-  height?: number;
-  onGameOver?: (params: { score: number; speed: number; length: number; totalMoves: number }) => void;
-  onGameUpdate?: (params: {
-    recentMoves: number;
-    score: number;
-    snake: Snake;
-    speed: number;
-    totalMoves: number;
-  }) => void;
-  onStarted?: () => void;
-  snakePainter?: SnakePainter;
-  snakePainterOptions?: SnakePainterOptions;
-  speedInitial?: number;
-  speedIncrement?: number;
-  speedMax?: number;
-  speedMin?: number;
-  start?: boolean;
-  targetPainter?: TargetPainter;
-  targetPainterOptions?: TargetPainterOptions;
-  width?: number;
-};
-const Snoken: React.FC<Props> = props => {
+const Snoken: FC<SnokenProps> = props => {
   const {
     actionTextPainter,
     actionTextPainterOptions,
@@ -148,6 +104,7 @@ const Snoken: React.FC<Props> = props => {
   useEffect(() => {
     if (!gameRunning && start) {
       setScore(0);
+      setMoves([0, 0]);
       setSpeed(speedInitial);
       setDir([1, 0]);
       setSnake(defaultSnake);
