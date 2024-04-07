@@ -1,12 +1,12 @@
 import type { Direction } from './types';
 
-export type DirectionPressedParams = {
+export type SnakeVelocity = {
   dir: Direction;
   hasChangedDir: boolean;
-  setDir: (dir: Direction) => void;
-  setHasChangedDir: (hasChanged: boolean) => void;
-  setSpeed: (speed: number) => void;
   speed: number;
+};
+
+export type DirectionPressedOptions = {
   speedIncrement: number;
   speedInitial: number;
   speedMax: number;
@@ -24,30 +24,30 @@ const KEY_DIRECTIONS: Record<string, Direction | undefined> = {
   KeyS: [0, 1],
 };
 
-export type DirectionKeyPressed = (params: DirectionPressedParams, e: KeyboardEvent) => void;
-export const directionKeyPressed: DirectionKeyPressed = (params, e) => {
+export type DirectionKeyPressed = (
+  snakeVelocity: SnakeVelocity,
+  setSnakeVelocity: React.Dispatch<React.SetStateAction<SnakeVelocity>>,
+  options: DirectionPressedOptions,
+  e: KeyboardEvent,
+) => void;
+export const directionKeyPressed: DirectionKeyPressed = (snakeVelocity, setSnakeVelocity, options, e) => {
   const newDir = KEY_DIRECTIONS[e.code];
   if (!newDir) return;
 
   e.preventDefault();
   e.stopPropagation();
-  directionPressed(params, newDir);
+  directionPressed(snakeVelocity, setSnakeVelocity, options, newDir);
 };
 
-type DirectionPressed = (params: DirectionPressedParams, newDir: Direction) => void;
-export const directionPressed: DirectionPressed = (params, newDir) => {
-  const {
-    dir,
-    hasChangedDir,
-    setDir,
-    setHasChangedDir,
-    setSpeed,
-    speed,
-    speedIncrement,
-    speedInitial,
-    speedMax,
-    speedMin,
-  } = params;
+type DirectionPressed = (
+  snakeVelocity: SnakeVelocity,
+  setSnakeVelocity: React.Dispatch<React.SetStateAction<SnakeVelocity>>,
+  options: DirectionPressedOptions,
+  newDir: Direction,
+) => void;
+export const directionPressed: DirectionPressed = (snakeVelocity, setSnakeVelocity, options, newDir) => {
+  const { dir, hasChangedDir, speed } = snakeVelocity;
+  const { speedIncrement, speedInitial, speedMax, speedMin } = options;
 
   const [x, y] = dir;
   const cx = x + newDir[0];
@@ -55,12 +55,11 @@ export const directionPressed: DirectionPressed = (params, newDir) => {
 
   if (cx === 0 && cy === 0) {
     // Pressed opposite direction key. No turn but slow down
-    if (speed > speedMin) setSpeed(Math.max(speed - speedIncrement, speedInitial));
+    if (speed > speedMin) setSnakeVelocity(v => ({ ...v, speed: Math.max(v.speed - speedIncrement, speedInitial) }));
   } else if (Math.abs(cx) === 2 || Math.abs(cy) === 2) {
     // Pressed same direction key. No turn but speed up
-    if (speed < speedMax) setSpeed(speed + speedIncrement);
+    if (speed < speedMax) setSnakeVelocity(v => ({ ...v, speed: speed + speedIncrement }));
   } else if (!hasChangedDir) {
-    setDir(newDir);
-    setHasChangedDir(true);
+    setSnakeVelocity(v => ({ ...v, dir: newDir, hasChangedDir: true }));
   }
 };
